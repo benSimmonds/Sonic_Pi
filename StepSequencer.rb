@@ -21,12 +21,14 @@ define :startUp do
 end
 
 define :init do ## Initialise all Loops
-  idx = 0
-  while get[:voices] > idx
-    lpName = "lpVc#{idx +1}"
-    set :"#{lpName}", (knit 0, noPads)
-    idx += 1
-  end
+  set :lpVc1, (knit 0, noPads)
+  set :lpVc2, (knit 0, noPads)
+  set :lpVc3, (knit 0, noPads)
+  set :lpVc4, (knit 0, noPads)
+  set :lpVc5, (knit 0, noPads)
+  set :lpVc6, (knit 0, noPads)
+  set :lpVc7, (knit 0, noPads)
+  set :lpVc8, (knit 0, noPads)
   set :currLoopID, "lpVc1" ##default to first voice's loop
   set :activeLoop, (knit 0, noPads)
   procLights ## Reset the Board
@@ -58,8 +60,10 @@ define :loopSelect do
   p = get[:currLoopID] #previous loopID
   set ":#{p}", a #save active to previous loop, should already be done, but... safety first?
   set :currLoopID, "lpVc#{get[:noteOn] - 99}" #select new current loop ID
-  #call new current loop to assign to active
-  set :activeLoop, get[":#{get[:currLoopID]}"] #apply selected loop to active
+  #get new current loop to assign to active
+  c = get[:"#{get[:currLoopID]}"]
+  set :activeLoop, c #apply selected loop to active
+  puts get[:activeLoop]
   procLights
 end
 
@@ -103,20 +107,29 @@ in_thread do
 end
 end
 
-sleep 4
+sleep 1
 
 live_loop :metronome do with_bpm get[:bpm] do
-    sleep 1
+    cue :metronome
+    sleep 4
   end
 end
 
+live_loop :metronome16 do with_bpm get[:bpm] do
+    n =0
+    while n <65
+      sync :metronome
+      n += 1
+    end
+    cue :metronome16
+  end
+end
 
 in_thread do
   sync :metronome
   live_loop :chaser do
     chaser
     tick
-    ##| stop
   end
 end
 
@@ -150,6 +163,33 @@ in_thread do
       hit = get[:lpVc3][seq.tick.round - base]
       sample :drum_cymbal_closed, amp: 1 if hit == 1
       sleep 0.250
+      ##| stop
     end
   end
 end
+
+in_thread do
+  sync :metronome
+  live_loop :cow do with_bpm get[:bpm] do
+      seq = get[:seq]
+      hit = get[:lpVc4][seq.tick.round - base]
+      sample :drum_cowbell, amp: 0.3, pitch: -5 if hit == 1
+      sleep 0.250
+    end
+  end
+end
+
+##| For saving patterns
+##| loop do
+##|   puts get[:lpVc1]
+##|   puts get[:lpVc2]
+##|   puts get[:lpVc3]
+##|   puts get[:lpVc4]
+##|   sleep 16
+##| end
+
+##| Frozen Pattern for Later
+##| kick = (ring 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0)
+##| snare = (ring 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0)
+##| hats = (ring 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1)
+##| cowbell = (ring 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
